@@ -13,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
+import com.aqppann.sqlanalyzer.dto.QueryStatisticsDto;
 
 @RestController
 @RequestMapping("/api/v1/queries")
@@ -54,5 +55,10 @@ public class QueryRecordController {
     @GetMapping("/top-slow")
     public ResponseEntity<List<QueryRecordResponseDto>> findTopSlow() {
         return ResponseEntity.ok(service.findTopSlow());
+    }
+
+    @GetMapping("/statistics")
+    public ResponseEntity<QueryStatisticsDto> getStatistics() {
+        return ResponseEntity.ok(service.getStatistics());
     }
 }

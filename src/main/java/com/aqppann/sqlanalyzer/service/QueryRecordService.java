@@ -12,6 +12,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.aqppann.sqlanalyzer.dto.QueryStatisticsDto;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -87,6 +88,23 @@ public class QueryRecordService {
                 .stream()
                 .map(r -> toDto(r, List.of()))
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public QueryStatisticsDto getStatistics() {
+        long total = repository.count();
+        long normal = repository.countByStatus(PerformanceStatus.NORMAL);
+        long slow = repository.countByStatus(PerformanceStatus.SLOW);
+        long critical = repository.countByStatus(PerformanceStatus.CRITICAL);
+
+        return QueryStatisticsDto.builder()
+                .totalCount(total)
+                .normalCount(normal)
+                .slowCount(slow)
+                .criticalCount(critical)
+                .slowPercent(total > 0 ? (double) slow / total * 100 : 0)
+                .criticalPercent(total > 0 ? (double) critical / total * 100 : 0)
+                .build();
     }
 
     private QueryRecordResponseDto toDto(QueryRecord entity, List<String> recommendations) {
