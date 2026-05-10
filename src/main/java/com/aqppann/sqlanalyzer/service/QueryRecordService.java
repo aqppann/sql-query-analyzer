@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.aqppann.sqlanalyzer.dto.QueryStatisticsDto;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -42,16 +43,41 @@ public class QueryRecordService {
     }
     @Transactional(readOnly = true)
     public Page<QueryRecordResponseDto> findAll(
-            PerformanceStatus status, String sqlText, Pageable pageable) {
-        if (status != null && sqlText != null) {
+            PerformanceStatus status,
+            String sqlText,
+            LocalDateTime from,
+            LocalDateTime to,
+            Pageable pageable) {
+
+        boolean hasStatus = status != null;
+        boolean hasSqlText = sqlText != null;
+        boolean hasDateRange = from != null && to != null;
+
+        if (hasStatus && hasSqlText && hasDateRange) {
+            return repository.findByStatusAndSqlTextContainingIgnoreCaseAndCreatedAtBetween(
+                    status, sqlText, from, to, pageable).map(r -> toDto(r, List.of()));
+        }
+        if (hasStatus && hasDateRange) {
+            return repository.findByStatusAndCreatedAtBetween(
+                    status, from, to, pageable).map(r -> toDto(r, List.of()));
+        }
+        if (hasSqlText && hasDateRange) {
+            return repository.findBySqlTextContainingIgnoreCaseAndCreatedAtBetween(
+                    sqlText, from, to, pageable).map(r -> toDto(r, List.of()));
+        }
+        if (hasDateRange) {
+            return repository.findByCreatedAtBetween(
+                    from, to, pageable).map(r -> toDto(r, List.of()));
+        }
+        if (hasStatus && hasSqlText) {
             return repository.findByStatusAndSqlTextContainingIgnoreCase(
                     status, sqlText, pageable).map(r -> toDto(r, List.of()));
         }
-        if (status != null) {
+        if (hasStatus) {
             return repository.findByStatus(
                     status, pageable).map(r -> toDto(r, List.of()));
         }
-        if (sqlText != null) {
+        if (hasSqlText) {
             return repository.findBySqlTextContainingIgnoreCase(
                     sqlText, pageable).map(r -> toDto(r, List.of()));
         }

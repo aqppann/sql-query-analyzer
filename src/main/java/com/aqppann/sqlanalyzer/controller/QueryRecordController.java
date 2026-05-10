@@ -12,6 +12,8 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDateTime;
 import java.util.List;
 import com.aqppann.sqlanalyzer.dto.QueryStatisticsDto;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -33,8 +35,10 @@ public class QueryRecordController {
     public ResponseEntity<Page<QueryRecordResponseDto>> findAll(
             @RequestParam(required = false) PerformanceStatus status,
             @RequestParam(required = false) String sqlText,
+            @RequestParam(required = false) LocalDateTime from,
+            @RequestParam(required = false) LocalDateTime to,
             @PageableDefault(size = 10, sort = "createdAt") Pageable pageable) {
-        return ResponseEntity.ok(service.findAll(status, sqlText, pageable));
+        return ResponseEntity.ok(service.findAll(status, sqlText, from, to, pageable));
     }
 
     @GetMapping("/{id}")
