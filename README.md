@@ -1,4 +1,5 @@
 # SQL Query Performance Analyzer API
+
 ![CI](https://github.com/aqppann/sql-query-analyzer/actions/workflows/ci.yml/badge.svg)
 
 A backend tool for analyzing SQL query performance.
@@ -16,13 +17,23 @@ and provides optimization recommendations.
   - Missing index detection on `email` column
   - `ORDER BY` performance warning
   - Missing `WHERE` / `LIMIT` clause warning
-  - `LIKE` with leading wildcard warning
+  - `LIKE` with wildcard warning
+  - `NOT IN` performance warning
+  - `OR` in WHERE clause warning
+  - `DISTINCT` usage warning
+  - Subquery in WHERE clause warning
+  - `JOIN` without ON condition warning
+  - `HAVING` without GROUP BY warning
 - Pagination and filtering by performance status
+- Search by SQL text
+- Filtering by date range
 - Top 10 slowest queries endpoint
 - Performance statistics endpoint
 - Global exception handling
 - DTO validation
 - Swagger / OpenAPI documentation
+- Docker + docker-compose support
+- CI/CD via GitHub Actions
 
 ---
 
@@ -38,6 +49,8 @@ and provides optimization recommendations.
 - SpringDoc OpenAPI
 - JUnit 5
 - Mockito
+- Docker
+- GitHub Actions
 
 ---
 
@@ -46,10 +59,14 @@ and provides optimization recommendations.
 ### Prerequisites
 
 - Java 17+
-- PostgreSQL (running locally)
 - Maven 3.x
+- PostgreSQL (for local run) or Docker (for containerized run)
 
-### Database Setup
+---
+
+### Run Locally
+
+#### Database Setup
 
 Open pgAdmin or any PostgreSQL client and run:
 
@@ -57,7 +74,7 @@ Open pgAdmin or any PostgreSQL client and run:
 CREATE DATABASE sql_analyzer;
 ```
 
-### Configuration
+#### Configuration
 
 Create file `src/main/resources/application-local.properties`:
 
@@ -70,13 +87,36 @@ spring.datasource.driver-class-name=org.postgresql.Driver
 
 > This file is excluded from Git via `.gitignore` to protect credentials.
 
-### Run
+#### Run
 
 1. Open **Run Configurations** in IntelliJ IDEA
 2. Set **Active profiles**: `local`
 3. Run `SqlAnalyzerApplication`
 
 App will start on `http://localhost:8082`
+
+---
+
+### Run with Docker
+
+#### Prerequisites
+
+- Docker Desktop installed and running
+
+#### Start
+
+```bash
+mvn clean package -DskipTests
+docker-compose up --build
+```
+
+App will start on `http://localhost:8082`
+
+#### Stop
+
+```bash
+docker-compose down
+```
 
 ---
 
@@ -91,6 +131,17 @@ App will start on `http://localhost:8082`
 | `DELETE` | `/api/v1/queries/{id}` | Delete query |
 | `GET` | `/api/v1/queries/top-slow` | Top 10 slowest queries |
 | `GET` | `/api/v1/queries/statistics` | Performance statistics |
+
+### Query Parameters for GET /api/v1/queries
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `status` | String | Filter by NORMAL / SLOW / CRITICAL |
+| `sqlText` | String | Search by SQL text (case-insensitive) |
+| `from` | LocalDateTime | Filter from date (e.g. 2026-05-01T00:00:00) |
+| `to` | LocalDateTime | Filter to date (e.g. 2026-05-31T23:59:59) |
+| `page` | int | Page number (default: 0) |
+| `size` | int | Page size (default: 10) |
 
 ### Example Request
 
@@ -144,6 +195,12 @@ POST /api/v1/queries
 | ORDER BY | `ORDER BY` + SLOW/CRITICAL | Add index on sorted column |
 | No filter | No `WHERE` and no `LIMIT` | Query may return too many rows |
 | LIKE wildcard | `LIKE '%...'` | Consider full-text search |
+| NOT IN | Query contains `NOT IN` | Use NOT EXISTS instead |
+| OR in WHERE | `WHERE ... OR ...` | Consider splitting into UNION |
+| DISTINCT | Query contains `DISTINCT` | Check JOIN logic for duplicates |
+| Subquery | `WHERE ... (SELECT ...)` | Use JOIN instead |
+| JOIN without ON | `JOIN` without `ON` or `USING` | Verify join conditions |
+| HAVING without GROUP BY | `HAVING` without `GROUP BY` | Use WHERE instead |
 
 ---
 
@@ -190,11 +247,24 @@ mvn test "-Dspring.profiles.active=local"
 
 ### Test Coverage
 
-| Class | Tests |
-|-------|-------|
-| `QueryAnalyzer` | 10 unit tests |
-| `QueryRecordService` | 5 unit tests |
-| `SqlAnalyzerApplication` | 1 context test |
+| Class | Type | Tests |
+|-------|------|-------|
+| `QueryAnalyzer` | Unit | 14 tests |
+| `QueryRecordService` | Unit | 5 tests |
+| `QueryRecordController` | Integration | 6 tests |
+| `SqlAnalyzerApplication` | Context | 1 test |
+
+---
+
+## CI/CD
+
+Every push to `main` branch automatically:
+
+1. Starts a PostgreSQL container
+2. Builds the project with Maven
+3. Runs all tests
+
+Pipeline is configured via GitHub Actions in `.github/workflows/ci.yml`
 
 ---
 
@@ -208,5 +278,5 @@ http://localhost:8082/swagger-ui/index.html
 
 ## Summary
 
-This project covers the full cycle of building a REST API — from database design and business logic to validation, error handling, and testing.
+This project covers the full cycle of building a REST API — from database design and business logic to validation, error handling, testing, containerization, and CI/CD automation.
 It demonstrates practical usage of Spring Boot, JPA, and Hibernate in a real-world scenario where performance monitoring and query analysis are essential parts of backend development.
