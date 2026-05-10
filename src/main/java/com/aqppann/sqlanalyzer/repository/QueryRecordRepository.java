@@ -11,10 +11,13 @@ import java.util.List;
 
 @Repository
 public interface QueryRecordRepository extends JpaRepository<QueryRecord, Long> {
-
     Page<QueryRecord> findByStatus(PerformanceStatus status, Pageable pageable);
-
     List<QueryRecord> findTop10ByOrderByExecutionTimeMsDesc();
-
     long countByStatus(PerformanceStatus status);
+
+    Page<QueryRecord> findByStatusAndSqlTextContainingIgnoreCase(
+            PerformanceStatus status, String sqlText, Pageable pageable);
+
+    Page<QueryRecord> findBySqlTextContainingIgnoreCase(
+            String sqlText, Pageable pageable);
 }

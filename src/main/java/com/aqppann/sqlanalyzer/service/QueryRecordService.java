@@ -41,9 +41,19 @@ public class QueryRecordService {
         return toDto(saved, recommendations);
     }
     @Transactional(readOnly = true)
-    public Page<QueryRecordResponseDto> findAll(PerformanceStatus status, Pageable pageable) {
+    public Page<QueryRecordResponseDto> findAll(
+            PerformanceStatus status, String sqlText, Pageable pageable) {
+        if (status != null && sqlText != null) {
+            return repository.findByStatusAndSqlTextContainingIgnoreCase(
+                    status, sqlText, pageable).map(r -> toDto(r, List.of()));
+        }
         if (status != null) {
-            return repository.findByStatus(status, pageable).map(r -> toDto(r, List.of()));
+            return repository.findByStatus(
+                    status, pageable).map(r -> toDto(r, List.of()));
+        }
+        if (sqlText != null) {
+            return repository.findBySqlTextContainingIgnoreCase(
+                    sqlText, pageable).map(r -> toDto(r, List.of()));
         }
         return repository.findAll(pageable).map(r -> toDto(r, List.of()));
     }

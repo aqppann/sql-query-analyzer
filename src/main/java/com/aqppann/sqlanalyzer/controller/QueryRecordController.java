@@ -32,8 +32,9 @@ public class QueryRecordController {
     @GetMapping
     public ResponseEntity<Page<QueryRecordResponseDto>> findAll(
             @RequestParam(required = false) PerformanceStatus status,
+            @RequestParam(required = false) String sqlText,
             @PageableDefault(size = 10, sort = "createdAt") Pageable pageable) {
-        return ResponseEntity.ok(service.findAll(status, pageable));
+        return ResponseEntity.ok(service.findAll(status, sqlText, pageable));
     }
 
     @GetMapping("/{id}")
