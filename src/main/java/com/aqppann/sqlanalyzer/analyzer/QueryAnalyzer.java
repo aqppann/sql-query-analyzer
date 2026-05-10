@@ -35,18 +35,41 @@ public class QueryAnalyzer {
             recommendations.add("ORDER BY on large datasets can be slow — consider adding an index on sorted column");
         }
 
-        if (sql.contains("LIKE") && sql.contains("%") && !sql.startsWith("%")) {
-            recommendations.add("LIKE with leading wildcard prevents index usage — consider full-text search");
+        if (sql.contains("LIKE") && sql.contains("%")) {
+            recommendations.add("LIKE with wildcard prevents index usage — consider full-text search");
         }
 
         if (!sql.contains("WHERE") && !sql.contains("LIMIT")) {
             recommendations.add("Query has no WHERE or LIMIT clause — may return too many rows");
         }
 
+        if (sql.contains("NOT IN")) {
+            recommendations.add("NOT IN can be slow on large datasets — consider using NOT EXISTS instead");
+        }
+
+        if (sql.contains("WHERE") && sql.contains(" OR ")) {
+            recommendations.add("OR in WHERE clause may prevent index usage — consider splitting into UNION queries");
+        }
+
+        if (sql.contains("DISTINCT")) {
+            recommendations.add("DISTINCT may indicate a problem with JOIN logic — check for duplicate rows source");
+        }
+
+        if (sql.contains("JOIN") && !sql.contains("ON") && !sql.contains("USING")) {
+            recommendations.add("JOIN without ON condition may produce a cartesian product — verify join conditions");
+        }
+
+        if (sql.contains("WHERE") && sql.contains("(SELECT")) {
+            recommendations.add("Subquery in WHERE clause can be slow — consider using JOIN instead");
+        }
+
+        if (sql.contains("HAVING") && !sql.contains("GROUP BY")) {
+            recommendations.add("HAVING without GROUP BY is unusual — consider using WHERE instead");
+        }
+
         if (recommendations.isEmpty()) {
             recommendations.add("No issues detected");
         }
-
         return recommendations;
     }
 }

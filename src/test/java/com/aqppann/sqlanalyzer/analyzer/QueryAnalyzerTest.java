@@ -99,4 +99,40 @@ class QueryAnalyzerTest {
         assertThat(recommendations)
                 .containsExactly("No issues detected");
     }
+
+    @Test
+    void shouldDetectNoIn(){
+        List<String> recommendations = analyzer.generateRecommendations(
+                "SELECT id FROM orders WHERE id NOT IN (SELECT id FROM archive)", 100L
+        );
+        assertThat(recommendations)
+                .anyMatch(r -> r.contains("NOT IN"));
+    }
+
+    @Test
+    void shouldDetectOrInWhere() {
+        List<String> recommendations = analyzer.generateRecommendations(
+                "SELECT id FROM users WHERE status = 'active' OR role = 'admin'", 100L
+        );
+        assertThat(recommendations)
+                .anyMatch(r -> r.contains("OR"));
+    }
+
+    @Test
+    void shouldDetectDistinct() {
+        List<String> recommendations = analyzer.generateRecommendations(
+                "SELECT DISTINCT id FROM users", 100L
+        );
+        assertThat(recommendations)
+                .anyMatch(r -> r.contains("DISTINCT"));
+    }
+
+    @Test
+    void shouldDetectSubqueryInWhere() {
+        List<String> recommendations = analyzer.generateRecommendations(
+                "SELECT id FROM orders WHERE id IN (SELECT id FROM archive)", 100L
+        );
+        assertThat(recommendations)
+                .anyMatch(r -> r.contains("Subquery"));
+    }
 }
