@@ -1,4 +1,5 @@
 # SQL Query Performance Analyzer API
+![CI](https://github.com/aqppann/sql-query-analyzer/actions/workflows/ci.yml/badge.svg)
 
 A backend tool for analyzing SQL query performance.
 Automatically classifies queries as **NORMAL**, **SLOW**, or **CRITICAL**
