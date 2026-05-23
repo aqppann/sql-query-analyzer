@@ -1,18 +1,31 @@
 # SQL Query Performance Analyzer API
 
-![CI](https://github.com/aqppann/sql-query-analyzer/actions/workflows/ci.yml/badge.svg)
+A REST API that helps backend developers track and analyze the performance of SQL queries.
+Developers submit their queries along with execution time — the system classifies each query,
+detects common performance problems, and returns actionable recommendations.
 
-A backend tool for analyzing SQL query performance.
-Automatically classifies queries as **NORMAL**, **SLOW**, or **CRITICAL**
-and provides optimization recommendations.
 
----
+
+## What It Does
+
+When building backend applications, slow database queries are one of the most common performance bottlenecks.
+This tool provides a simple way to:
+
+- **Track** SQL queries and their execution times in one place
+- **Classify** each query automatically as NORMAL, SLOW, or CRITICAL based on execution time
+- **Detect** common SQL anti-patterns and potential performance issues
+- **Recommend** specific optimizations for each query
+- **Analyze** overall query performance through statistics and filtering
+
+The developer sends a query with its execution time via the API — the system does the rest.
+
+
 
 ## Features
 
 - Store and manage SQL queries via REST API
 - Automatic performance classification (NORMAL / SLOW / CRITICAL)
-- Smart query analysis with optimization recommendations:
+- Smart query analysis with recommendations:
   - `SELECT *` usage warning
   - Missing index detection on `email` column
   - `ORDER BY` performance warning
@@ -25,7 +38,7 @@ and provides optimization recommendations.
   - `JOIN` without ON condition warning
   - `HAVING` without GROUP BY warning
 - Pagination and filtering by performance status
-- Search by SQL text
+- Search by SQL text (case-insensitive)
 - Filtering by date range
 - Top 10 slowest queries endpoint
 - Performance statistics endpoint
@@ -35,7 +48,7 @@ and provides optimization recommendations.
 - Docker + docker-compose support
 - CI/CD via GitHub Actions
 
----
+
 
 ## Tech Stack
 
@@ -52,7 +65,6 @@ and provides optimization recommendations.
 - Docker
 - GitHub Actions
 
----
 
 ## Getting Started
 
@@ -62,7 +74,6 @@ and provides optimization recommendations.
 - Maven 3.x
 - PostgreSQL (for local run) or Docker (for containerized run)
 
----
 
 ### Run Locally
 
@@ -95,7 +106,6 @@ spring.datasource.driver-class-name=org.postgresql.Driver
 
 App will start on `http://localhost:8082`
 
----
 
 ### Run with Docker
 
@@ -118,15 +128,13 @@ App will start on `http://localhost:8082`
 docker-compose down
 ```
 
----
-
 ## API Endpoints
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| `POST` | `/api/v1/queries` | Create and analyze a query |
+| `POST` | `/api/v1/queries` | Submit a query for analysis |
 | `GET` | `/api/v1/queries` | Get all queries (pagination + filter) |
-| `GET` | `/api/v1/queries/{id}` | Get query by ID |
+| `GET` | `/api/v1/queries/{id}` | Get query by ID with recommendations |
 | `PUT` | `/api/v1/queries/{id}` | Update query |
 | `DELETE` | `/api/v1/queries/{id}` | Delete query |
 | `GET` | `/api/v1/queries/top-slow` | Top 10 slowest queries |
@@ -151,7 +159,7 @@ POST /api/v1/queries
   "sqlText": "SELECT * FROM users WHERE email = 'test@test.com' ORDER BY created_at",
   "executionTimeMs": 1500,
   "databaseName": "production",
-  "notes": "slow query detected"
+  "notes": "user search query"
 }
 ```
 
@@ -164,7 +172,7 @@ POST /api/v1/queries
   "executionTimeMs": 1500,
   "status": "SLOW",
   "databaseName": "production",
-  "notes": "slow query detected",
+  "notes": "user search query",
   "createdAt": "2026-05-01T15:43:59.117933",
   "recommendations": [
     "Avoid SELECT * — specify only required columns to reduce data transfer",
@@ -174,7 +182,7 @@ POST /api/v1/queries
 }
 ```
 
----
+
 
 ## Performance Thresholds
 
@@ -184,7 +192,6 @@ POST /api/v1/queries
 | `SLOW` | 1000ms - 4999ms | Query needs attention |
 | `CRITICAL` | >= 5000ms | Query requires immediate fix |
 
----
 
 ## Query Analysis Rules
 
@@ -202,21 +209,20 @@ POST /api/v1/queries
 | JOIN without ON | `JOIN` without `ON` or `USING` | Verify join conditions |
 | HAVING without GROUP BY | `HAVING` without `GROUP BY` | Use WHERE instead |
 
----
 
 ## Project Structure
 
 ```
 src/main/java/com/aqppann/sqlanalyzer/
 ├── analyzer/
-│   └── QueryAnalyzer.java          # SQL analysis logic
+│   └── QueryAnalyzer.java          # Classification and recommendation logic
 ├── config/
 │   └── OpenApiConfig.java          # Swagger configuration
 ├── controller/
 │   └── QueryRecordController.java  # REST endpoints
 ├── dto/
 │   ├── QueryRecordRequestDto.java  # Input DTO with validation
-│   ├── QueryRecordResponseDto.java # Output DTO
+│   ├── QueryRecordResponseDto.java # Output DTO with recommendations
 │   └── QueryStatisticsDto.java     # Statistics DTO
 ├── entity/
 │   ├── QueryRecord.java            # JPA entity
@@ -231,7 +237,6 @@ src/main/java/com/aqppann/sqlanalyzer/
 └── SqlAnalyzerApplication.java     # Entry point
 ```
 
----
 
 ## Running Tests
 
@@ -254,7 +259,6 @@ mvn test "-Dspring.profiles.active=local"
 | `QueryRecordController` | Integration | 6 tests |
 | `SqlAnalyzerApplication` | Context | 1 test |
 
----
 
 ## CI/CD
 
@@ -266,17 +270,15 @@ Every push to `main` branch automatically:
 
 Pipeline is configured via GitHub Actions in `.github/workflows/ci.yml`
 
----
-
 ## Swagger UI
 
 ```
 http://localhost:8082/swagger-ui/index.html
 ```
 
----
-
 ## Summary
 
-This project covers the full cycle of building a REST API — from database design and business logic to validation, error handling, testing, containerization, and CI/CD automation.
-It demonstrates practical usage of Spring Boot, JPA, and Hibernate in a real-world scenario where performance monitoring and query analysis are essential parts of backend development.
+This tool addresses a real backend development problem — tracking and improving SQL query performance.
+It covers the full cycle of building a production-ready REST API: database design, business logic,
+validation, error handling, unit and integration testing, containerization with Docker,
+and CI/CD automation via GitHub Actions.
