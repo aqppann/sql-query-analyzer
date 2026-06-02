@@ -33,10 +33,11 @@ class QueryRecordServiceTest {
 
     @Test
     void shouldCreateQueryRecord() {
-        QueryRecordRequestDto request = new QueryRecordRequestDto();
-        request.setSqlText("SELECT * FROM users");
-        request.setExecutionTimeMs(1500L);
-        request.setDatabaseName("production");
+        QueryRecordRequestDto request = QueryRecordRequestDto.builder()
+                .sqlText("SELECT * FROM users")
+                .executionTimeMs(1500L)
+                .databaseName("production")
+                .build();
 
         QueryRecord saved = QueryRecord.builder()
                 .id(1L)
@@ -53,8 +54,8 @@ class QueryRecordServiceTest {
 
         QueryRecordResponseDto response = service.create(request);
 
-        assertThat(response.getStatus()).isEqualTo(PerformanceStatus.SLOW);
-        assertThat(response.getRecommendations()).contains("Avoid SELECT *");
+        assertThat(response.status()).isEqualTo(PerformanceStatus.SLOW);
+        assertThat(response.recommendations()).contains("Avoid SELECT *");
         verify(repository, times(1)).save(any());
     }
 
@@ -100,6 +101,6 @@ class QueryRecordServiceTest {
         List<QueryRecordResponseDto> result = service.findTopSlow();
 
         assertThat(result).hasSize(1);
-        assertThat(result.get(0).getStatus()).isEqualTo(PerformanceStatus.CRITICAL);
+        assertThat(result.get(0).status()).isEqualTo(PerformanceStatus.CRITICAL);
     }
 }

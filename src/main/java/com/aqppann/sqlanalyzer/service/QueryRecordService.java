@@ -10,12 +10,12 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.aqppann.sqlanalyzer.dto.QueryStatisticsDto;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -26,21 +26,22 @@ public class QueryRecordService {
 
     @Transactional
     public QueryRecordResponseDto create(QueryRecordRequestDto request) {
-        PerformanceStatus status = analyzer.analyzeStatus(request.getExecutionTimeMs());
+        PerformanceStatus status = analyzer.analyzeStatus(request.executionTimeMs());
         List<String> recommendations = analyzer.generateRecommendations(
-                request.getSqlText(), request.getExecutionTimeMs()
+                request.sqlText(), request.executionTimeMs()
         );
 
         QueryRecord entity = QueryRecord.builder()
-                .sqlText(request.getSqlText())
-                .executionTimeMs(request.getExecutionTimeMs())
-                .databaseName(request.getDatabaseName())
-                .notes(request.getNotes())
+                .sqlText(request.sqlText())
+                .executionTimeMs(request.executionTimeMs())
+                .databaseName(request.databaseName())
+                .notes(request.notes())
                 .status(status)
                 .build();
         QueryRecord saved = repository.save(entity);
         return toDto(saved, recommendations);
     }
+
     @Transactional(readOnly = true)
     public Page<QueryRecordResponseDto> findAll(
             PerformanceStatus status,
@@ -49,40 +50,22 @@ public class QueryRecordService {
             LocalDateTime to,
             Pageable pageable) {
 
-        boolean hasStatus = status != null;
-        boolean hasSqlText = sqlText != null;
-        boolean hasDateRange = from != null && to != null;
+        Specification<QueryRecord> spec = Specification.where(null);
 
-        if (hasStatus && hasSqlText && hasDateRange) {
-            return repository.findByStatusAndSqlTextContainingIgnoreCaseAndCreatedAtBetween(
-                    status, sqlText, from, to, pageable).map(r -> toDto(r, List.of()));
+        if (status != null) {
+            spec = spec.and((root, query, cb) -> cb.equal(root.get("status"), status));
         }
-        if (hasStatus && hasDateRange) {
-            return repository.findByStatusAndCreatedAtBetween(
-                    status, from, to, pageable).map(r -> toDto(r, List.of()));
+        if (sqlText != null && !sqlText.isBlank()) {
+            spec = spec.and((root, query, cb) ->
+                    cb.like(cb.lower(root.get("sqlText")), "%" + sqlText.toLowerCase() + "%"));
         }
-        if (hasSqlText && hasDateRange) {
-            return repository.findBySqlTextContainingIgnoreCaseAndCreatedAtBetween(
-                    sqlText, from, to, pageable).map(r -> toDto(r, List.of()));
+        if (from != null && to != null) {
+            spec = spec.and((root, query, cb) -> cb.between(root.get("createdAt"), from, to));
         }
-        if (hasDateRange) {
-            return repository.findByCreatedAtBetween(
-                    from, to, pageable).map(r -> toDto(r, List.of()));
-        }
-        if (hasStatus && hasSqlText) {
-            return repository.findByStatusAndSqlTextContainingIgnoreCase(
-                    status, sqlText, pageable).map(r -> toDto(r, List.of()));
-        }
-        if (hasStatus) {
-            return repository.findByStatus(
-                    status, pageable).map(r -> toDto(r, List.of()));
-        }
-        if (hasSqlText) {
-            return repository.findBySqlTextContainingIgnoreCase(
-                    sqlText, pageable).map(r -> toDto(r, List.of()));
-        }
-        return repository.findAll(pageable).map(r -> toDto(r, List.of()));
+
+        return repository.findAll(spec, pageable).map(r -> toDto(r, List.of()));
     }
+
     @Transactional(readOnly = true)
     public QueryRecordResponseDto findById(Long id) {
         QueryRecord record = repository.findById(id)
@@ -92,25 +75,27 @@ public class QueryRecordService {
         );
         return toDto(record, recommendations);
     }
+
     @Transactional
     public QueryRecordResponseDto update(Long id, QueryRecordRequestDto request) {
         QueryRecord record = repository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Query record not found with id: " + id));
 
-        PerformanceStatus status = analyzer.analyzeStatus(request.getExecutionTimeMs());
+        PerformanceStatus status = analyzer.analyzeStatus(request.executionTimeMs());
         List<String> recommendations = analyzer.generateRecommendations(
-                request.getSqlText(), request.getExecutionTimeMs()
+                request.sqlText(), request.executionTimeMs()
         );
 
-        record.setSqlText(request.getSqlText());
-        record.setExecutionTimeMs(request.getExecutionTimeMs());
-        record.setDatabaseName(request.getDatabaseName());
-        record.setNotes(request.getNotes());
+        record.setSqlText(request.sqlText());
+        record.setExecutionTimeMs(request.executionTimeMs());
+        record.setDatabaseName(request.databaseName());
+        record.setNotes(request.notes());
         record.setStatus(status);
 
         QueryRecord saved = repository.save(record);
         return toDto(saved, recommendations);
     }
+
     @Transactional
     public void delete(Long id) {
         if (!repository.existsById(id)) {
@@ -118,6 +103,7 @@ public class QueryRecordService {
         }
         repository.deleteById(id);
     }
+
     @Transactional(readOnly = true)
     public List<QueryRecordResponseDto> findTopSlow() {
         return repository.findTop10ByOrderByExecutionTimeMsDesc()

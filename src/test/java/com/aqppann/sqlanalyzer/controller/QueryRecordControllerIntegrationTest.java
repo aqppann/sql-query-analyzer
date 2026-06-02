@@ -17,8 +17,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
-@ActiveProfiles("local")
-class QueryRecordControllerIntegrationTest{
+@ActiveProfiles("test")
+class QueryRecordControllerIntegrationTest {
     @Autowired
     private MockMvc mockMvc;
     @Autowired
@@ -33,23 +33,26 @@ class QueryRecordControllerIntegrationTest{
 
     @Test
     void shouldCreateQueryRecordAndReturnStatus201() throws Exception {
-        QueryRecordRequestDto request = new QueryRecordRequestDto();
-        request.setSqlText("SELECT * FROM user");
-        request.setExecutionTimeMs(1500L);
-        request.setDatabaseName("production");
+        QueryRecordRequestDto request = QueryRecordRequestDto.builder()
+                .sqlText("SELECT * FROM user")
+                .executionTimeMs(1500L)
+                .databaseName("production")
+                .build();
 
         mockMvc.perform(post("/api/v1/queries")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.status").value("SLOW"))
                 .andExpect(jsonPath("$.recommendations", hasSize(greaterThan(0))));
     }
 
     @Test
     void shouldReturnStatus400_whenSqlTextIsBlank() throws Exception {
-        QueryRecordRequestDto request = new QueryRecordRequestDto();
-        request.setSqlText("");
-        request.setExecutionTimeMs(1500L);
+        QueryRecordRequestDto request = QueryRecordRequestDto.builder()
+                .sqlText("")
+                .executionTimeMs(1500L)
+                .build();
 
         mockMvc.perform(post("/api/v1/queries")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -67,9 +70,10 @@ class QueryRecordControllerIntegrationTest{
 
     @Test
     void shouldReturnAllQueryRecords() throws Exception {
-        QueryRecordRequestDto request = new QueryRecordRequestDto();
-        request.setSqlText("SELECT id FROM orders");
-        request.setExecutionTimeMs(500L);
+        QueryRecordRequestDto request = QueryRecordRequestDto.builder()
+                .sqlText("SELECT id FROM orders")
+                .executionTimeMs(500L)
+                .build();
 
         mockMvc.perform(post("/api/v1/queries")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -82,9 +86,10 @@ class QueryRecordControllerIntegrationTest{
 
     @Test
     void shouldDeleteQueryRecord() throws Exception {
-        QueryRecordRequestDto request = new QueryRecordRequestDto();
-        request.setSqlText("SELECT id FROM users");
-        request.setExecutionTimeMs(500L);
+        QueryRecordRequestDto request = QueryRecordRequestDto.builder()
+                .sqlText("SELECT id FROM users")
+                .executionTimeMs(500L)
+                .build();
 
         String response = mockMvc.perform(post("/api/v1/queries")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -98,9 +103,10 @@ class QueryRecordControllerIntegrationTest{
 
     @Test
     void shouldReturnStatistics() throws Exception {
-        QueryRecordRequestDto request = new QueryRecordRequestDto();
-        request.setSqlText("SELECT * FROM users");
-        request.setExecutionTimeMs(6000L);
+        QueryRecordRequestDto request = QueryRecordRequestDto.builder()
+                .sqlText("SELECT * FROM users")
+                .executionTimeMs(6000L)
+                .build();
 
         mockMvc.perform(post("/api/v1/queries")
                 .contentType(MediaType.APPLICATION_JSON)
