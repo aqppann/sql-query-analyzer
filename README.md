@@ -282,3 +282,6 @@ This tool addresses a real backend development problem — tracking and improvin
 It covers the full cycle of building a production-ready REST API: database design, business logic,
 validation, error handling, unit and integration testing, containerization with Docker,
 and CI/CD automation via GitHub Actions.
+
+## Live Demo
+https://sql-query-analyzer-8bju.onrender.com
