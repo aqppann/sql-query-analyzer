@@ -1,6 +1,7 @@
 package com.aqppann.sqlanalyzer.analyzer;
 
 import com.aqppann.sqlanalyzer.entity.PerformanceStatus;
+import com.aqppann.sqlanalyzer.analyzer.rule.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -13,7 +14,17 @@ class QueryAnalyzerTest {
 
     @BeforeEach
     void setUp() {
-        analyzer = new QueryAnalyzer();
+        analyzer = new QueryAnalyzer(List.of(
+                new SelectStarRuleAnalyzer(),
+                new IndexSuggestionRuleAnalyzer(),
+                new OrderByRuleAnalyzer(),
+                new NoFilterRuleAnalyzer(),
+                new DistinctRuleAnalyzer(),
+                new JoinConditionRuleAnalyzer(),
+                new HavingGroupByRuleAnalyzer(),
+                new WhereExpressionRuleAnalyzer(),
+                new FunctionOnColumnRuleAnalyzer()
+        ));
     }
 
     @Test
@@ -134,5 +145,23 @@ class QueryAnalyzerTest {
         );
         assertThat(recommendations)
                 .anyMatch(r -> r.contains("Subquery"));
+    }
+
+    @Test
+    void shouldSuggestUnionAll_whenUnionIsUsed() {
+        List<String> recommendations = analyzer.generateRecommendations(
+                "SELECT id FROM users UNION SELECT id FROM archive", 100L
+        );
+        assertThat(recommendations)
+                .anyMatch(r -> r.contains("UNION ALL"));
+    }
+
+    @Test
+    void shouldDetectFunctionOnColumn_whenFunctionIsUsedInWhere() {
+        List<String> recommendations = analyzer.generateRecommendations(
+                "SELECT id FROM users WHERE LOWER(username) = 'john'", 100L
+        );
+        assertThat(recommendations)
+                .anyMatch(r -> r.contains("Using a function (LOWER) on column 'username'"));
     }
 }

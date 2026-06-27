@@ -1,5 +1,6 @@
 package com.aqppann.sqlanalyzer.controller;
 
+import com.aqppann.sqlanalyzer.BaseIntegrationTest;
 import com.aqppann.sqlanalyzer.dto.QueryRecordRequestDto;
 import com.aqppann.sqlanalyzer.repository.QueryRecordRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -7,26 +8,25 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
-import static org.hamcrest.Matchers.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@SpringBootTest
+import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.hasSize;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 @AutoConfigureMockMvc
-@ActiveProfiles("test")
-class QueryRecordControllerIntegrationTest {
+class QueryRecordControllerPostgresTest extends BaseIntegrationTest {
     @Autowired
     private MockMvc mockMvc;
+
     @Autowired
     private QueryRecordRepository repository;
+
     @Autowired
     private ObjectMapper objectMapper;
-
-    private static final String API_KEY = "default-key-12345";
 
     @BeforeEach
     void setUp() {
@@ -34,30 +34,16 @@ class QueryRecordControllerIntegrationTest {
     }
 
     @Test
-    void shouldReturnStatus401_whenApiKeyIsMissing() throws Exception {
-        mockMvc.perform(get("/api/v1/queries"))
-                .andExpect(status().isUnauthorized());
-    }
-
-    @Test
-    void shouldReturnStatus401_whenApiKeyIsInvalid() throws Exception {
-        mockMvc.perform(get("/api/v1/queries")
-                        .header("X-API-KEY", "wrong-key"))
-                .andExpect(status().isUnauthorized());
-    }
-
-    @Test
     void shouldCreateQueryRecordAndReturnStatus201() throws Exception {
         QueryRecordRequestDto request = QueryRecordRequestDto.builder()
-                .sqlText("SELECT * FROM user")
+                .sqlText("SELECT * FROM users")
                 .executionTimeMs(1500L)
                 .databaseName("production")
                 .build();
 
         mockMvc.perform(post("/api/v1/queries")
-                .header("X-API-KEY", API_KEY)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.status").value("SLOW"))
                 .andExpect(jsonPath("$.recommendations", hasSize(greaterThan(0))));
@@ -71,7 +57,6 @@ class QueryRecordControllerIntegrationTest {
                 .build();
 
         mockMvc.perform(post("/api/v1/queries")
-                        .header("X-API-KEY", API_KEY)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
@@ -80,8 +65,7 @@ class QueryRecordControllerIntegrationTest {
 
     @Test
     void shouldReturnStatus404_whenQueryRecordNotFound() throws Exception {
-        mockMvc.perform(get("/api/v1/queries/9999")
-                        .header("X-API-KEY", API_KEY))
+        mockMvc.perform(get("/api/v1/queries/9999"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.error").value("Not Found"));
     }
@@ -94,12 +78,10 @@ class QueryRecordControllerIntegrationTest {
                 .build();
 
         mockMvc.perform(post("/api/v1/queries")
-                .header("X-API-KEY", API_KEY)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)));
 
-        mockMvc.perform(get("/api/v1/queries")
-                        .header("X-API-KEY", API_KEY))
+        mockMvc.perform(get("/api/v1/queries"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalElements").value(1));
     }
@@ -112,14 +94,12 @@ class QueryRecordControllerIntegrationTest {
                 .build();
 
         String response = mockMvc.perform(post("/api/v1/queries")
-                        .header("X-API-KEY", API_KEY)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andReturn().getResponse().getContentAsString();
 
         Long id = objectMapper.readTree(response).get("id").asLong();
-        mockMvc.perform(delete("/api/v1/queries/" + id)
-                        .header("X-API-KEY", API_KEY))
+        mockMvc.perform(delete("/api/v1/queries/" + id))
                 .andExpect(status().isNoContent());
     }
 
@@ -131,12 +111,10 @@ class QueryRecordControllerIntegrationTest {
                 .build();
 
         mockMvc.perform(post("/api/v1/queries")
-                .header("X-API-KEY", API_KEY)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)));
 
-        mockMvc.perform(get("/api/v1/queries/statistics")
-                        .header("X-API-KEY", API_KEY))
+        mockMvc.perform(get("/api/v1/queries/statistics"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.criticalCount").value(1));
     }

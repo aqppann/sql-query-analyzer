@@ -49,4 +49,4 @@ jobs:
         run: mvn clean package -DskipTests
 
       - name: Run tests
-        run: mvn test
+        run: mvn test -Ptestcontainers
