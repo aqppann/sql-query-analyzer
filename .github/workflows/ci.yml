@@ -45,7 +45,7 @@ jobs:
         run: mvn clean package -DskipTests
 
       - name: Run tests
-        run: mvn test
+        run: mvn test -e
         env:
           SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/sql_analyzer
           SPRING_DATASOURCE_USERNAME: postgres
