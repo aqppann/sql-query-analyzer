@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SQL Performance Analyzer</title>
-    <!-- Google Fonts: Inter for UI, Fira Code for SQL Code -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -864,11 +863,9 @@
 </div>
 
 <script>
-    // State management
     let currentPage = 0;
     const pageSize = 10;
-    
-    // Elements
+
     const statsTotal = document.getElementById('stats-total');
     const statsNormal = document.getElementById('stats-normal');
     const statsNormalPct = document.getElementById('stats-normal-pct');
@@ -901,7 +898,6 @@
     const modalClose = document.getElementById('modal-close');
     const modalCodeBlock = document.getElementById('modal-code-block');
 
-    // Initialization
     document.addEventListener('DOMContentLoaded', () => {
         loadStats();
         loadHistory();
@@ -917,7 +913,7 @@
         sqlModal.addEventListener('click', (e) => { if (e.target === sqlModal) hideModal(); });
     });
 
-    // Helper functions
+
     function debounce(func, wait) {
         let timeout;
         return function(...args) {
@@ -945,7 +941,10 @@
     // API Interactions
     async function loadStats() {
         try {
-            const response = await fetch('/api/v1/queries/statistics');
+            const response = await fetch('/api/v1/queries/statistics', {
+                headers: { 'X-API-KEY': 'default-key-12345' }
+            });
+
             if (!response.ok) throw new Error('Failed to fetch stats');
             const data = await response.json();
             
@@ -974,7 +973,10 @@
         try {
             const response = await fetch('/api/v1/queries', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-API-KEY': 'default-key-12345'
+                },
                 body: JSON.stringify(payload)
             });
             
@@ -1044,7 +1046,9 @@
         if (status) url += `&status=${status}`;
         
         try {
-            const response = await fetch(url);
+            const response = await fetch(url, {
+                headers: { 'X-API-KEY': 'default-key-12345' }
+            });
             if (!response.ok) throw new Error('Failed to load history');
             const data = await response.json();
             
