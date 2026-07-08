@@ -59,8 +59,11 @@ public class QueryRecordService {
             spec = spec.and((root, query, cb) ->
                     cb.like(cb.lower(root.get("sqlText")), "%" + sqlText.toLowerCase() + "%"));
         }
-        if (from != null && to != null) {
-            spec = spec.and((root, query, cb) -> cb.between(root.get("createdAt"), from, to));
+        if (from != null) {
+            spec = spec.and((root, query, cb) -> cb.greaterThanOrEqualTo(root.get("createdAt"), from));
+        }
+        if (to != null) {
+            spec = spec.and((root, query, cb) -> cb.lessThanOrEqualTo(root.get("createdAt"), to));
         }
 
         return repository.findAll(spec, pageable).map(r -> toDto(r, List.of()));

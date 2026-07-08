@@ -6,6 +6,7 @@ import com.aqppann.sqlanalyzer.repository.QueryRecordRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIf;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
@@ -18,6 +19,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @AutoConfigureMockMvc
+@EnabledIf(value = "com.aqppann.sqlanalyzer.DockerCondition#isDockerRunning", disabledReason = "Docker is not running")
 class QueryRecordControllerPostgresTest extends BaseIntegrationTest {
     @Autowired
     private MockMvc mockMvc;
@@ -27,6 +29,8 @@ class QueryRecordControllerPostgresTest extends BaseIntegrationTest {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    private static final String API_KEY = "default-key-12345";
 
     @BeforeEach
     void setUp() {
@@ -42,6 +46,7 @@ class QueryRecordControllerPostgresTest extends BaseIntegrationTest {
                 .build();
 
         mockMvc.perform(post("/api/v1/queries")
+                        .header("X-API-KEY", API_KEY)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
@@ -57,6 +62,7 @@ class QueryRecordControllerPostgresTest extends BaseIntegrationTest {
                 .build();
 
         mockMvc.perform(post("/api/v1/queries")
+                        .header("X-API-KEY", API_KEY)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
@@ -65,7 +71,8 @@ class QueryRecordControllerPostgresTest extends BaseIntegrationTest {
 
     @Test
     void shouldReturnStatus404_whenQueryRecordNotFound() throws Exception {
-        mockMvc.perform(get("/api/v1/queries/9999"))
+        mockMvc.perform(get("/api/v1/queries/9999")
+                        .header("X-API-KEY", API_KEY))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.error").value("Not Found"));
     }
@@ -78,10 +85,12 @@ class QueryRecordControllerPostgresTest extends BaseIntegrationTest {
                 .build();
 
         mockMvc.perform(post("/api/v1/queries")
+                .header("X-API-KEY", API_KEY)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)));
 
-        mockMvc.perform(get("/api/v1/queries"))
+        mockMvc.perform(get("/api/v1/queries")
+                        .header("X-API-KEY", API_KEY))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalElements").value(1));
     }
@@ -94,12 +103,14 @@ class QueryRecordControllerPostgresTest extends BaseIntegrationTest {
                 .build();
 
         String response = mockMvc.perform(post("/api/v1/queries")
+                        .header("X-API-KEY", API_KEY)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andReturn().getResponse().getContentAsString();
 
         Long id = objectMapper.readTree(response).get("id").asLong();
-        mockMvc.perform(delete("/api/v1/queries/" + id))
+        mockMvc.perform(delete("/api/v1/queries/" + id)
+                        .header("X-API-KEY", API_KEY))
                 .andExpect(status().isNoContent());
     }
 
@@ -111,10 +122,12 @@ class QueryRecordControllerPostgresTest extends BaseIntegrationTest {
                 .build();
 
         mockMvc.perform(post("/api/v1/queries")
+                .header("X-API-KEY", API_KEY)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)));
 
-        mockMvc.perform(get("/api/v1/queries/statistics"))
+        mockMvc.perform(get("/api/v1/queries/statistics")
+                        .header("X-API-KEY", API_KEY))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.criticalCount").value(1));
     }
